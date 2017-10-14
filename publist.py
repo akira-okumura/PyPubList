@@ -6,8 +6,8 @@ import sys
 
 class ADSEntry(object):
     def __init__(self, ads_id):
-        ads_id = ads_id.replace('&', '%26') # remove '&' for URL
-        url = 'http://adsabs.harvard.edu/cgi-bin/nph-abs_connect?bibcode=%s&data_type=ENDNOTE&return_fmt=LONG' % ads_id
+        self.ads_id = ads_id.replace('&', '%26') # remove '&' for URL
+        url = 'http://adsabs.harvard.edu/cgi-bin/nph-abs_connect?bibcode=%s&data_type=ENDNOTE&return_fmt=LONG' % self.ads_id
         sys.stderr.write('Downloading %s\n' % url)
         temp = tempfile.TemporaryFile()
         urllib.urlretrieve(url, temp.name)
@@ -17,6 +17,21 @@ class ADSEntry(object):
 
         self.getAuthorNames()
         self.getJournal()
+
+    def getPagesFromBibTeX(self):
+        url = 'http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=%s&data_type=BIBTEX' % self.ads_id
+        sys.stderr.write('Downloading %s\n' % url)
+        temp = tempfile.TemporaryFile()
+        urllib.urlretrieve(url, temp.name)
+        f = codecs.open(temp.name, 'r', 'iso-8859-1')
+        self.bibtex = f.read()
+        f.close()
+
+        for line in self.bibtex.split('\n'):
+            if line.find('pages = ') >= 0:
+                return line.split('pages = ')[1].split('{')[1].split('}')[0]
+
+        return ''
 
     def getAuthorNames(self):
         self.authors = []
@@ -42,6 +57,7 @@ class ADSEntry(object):
 
     def getJournal(self):
         # Retrieve journal information
+        self.pages = '' # sometimes it is empty in EndNote format
         for line in self.endnote.split('\n'):
             if line.find('%T ') == 0: # EndNote tag for title
                 self.title = line.split('%T ')[1]
@@ -73,6 +89,9 @@ class ADSEntry(object):
                     pass
 
                 self.journal = line
+
+        if self.pages == '':
+            self.pages = self.getPagesFromBibTeX()
 
     def formatAuthors(self, ul_authors, cor_authors = (), maximum = 5, firstlast = True):
         s = u''
