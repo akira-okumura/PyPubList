@@ -60,6 +60,7 @@ class ADSEntry(object):
                              'The Astrophysical Journal Supplement Series': 'Astrophys. Jour. Suppl. Ser.',
                              'Astroparticle Physics': 'Astropart. Phys.',
                              'Physical Review Letters': 'Phys. Rev. Lett.',
+                             'Physical Review D': 'Phys. Rev. D',
                              'Science': 'Science',
                              'Nature': 'Nature',
                              'Astronomy and Astrophysics': 'Astron. Astrophys.',
