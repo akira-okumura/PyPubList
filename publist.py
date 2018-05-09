@@ -58,6 +58,7 @@ class ADSEntry(object):
     def getJournal(self):
         # Retrieve journal information
         self.pages = '' # sometimes it is empty in EndNote format
+        self.volume = '' # sometimes it is empty in EndNote format
         for line in self.endnote.split('\n'):
             if line.find('%T ') == 0: # EndNote tag for title
                 self.title = line.split('%T ')[1]
@@ -93,7 +94,7 @@ class ADSEntry(object):
         if self.pages == '':
             self.pages = self.getPagesFromBibTeX()
 
-    def formatAuthors(self, ul_authors, cor_authors = (), maximum = 5, firstlast = True):
+    def formatAuthors(self, ul_authors, cor_authors = (), maximum = 5, firstlast = True, japanese = False):
         s = u''
 
         if firstlast:
@@ -137,16 +138,19 @@ class ADSEntry(object):
 
                     n = i + 1
                     order = u'%d' % n
-                    if n%100 in (11, 12, 13):
-                        order += u'th'
-                    elif n%10 == 1:
-                        order += u'st'
-                    elif n%10 == 2:
-                        order += u'nd'
-                    elif n%10 == 3:
-                        order += u'rd'
+                    if japanese:
+                        order += u' 番目'
                     else:
-                        order += u'th'
+                        if n%100 in (11, 12, 13):
+                            order += u'th'
+                        elif n%10 == 1:
+                            order += u'st'
+                        elif n%10 == 2:
+                            order += u'nd'
+                        elif n%10 == 3:
+                            order += u'rd'
+                        else:
+                            order += u'th'
 
                     if author.replace(u'\u00a0', u' ').replace('*', '') in ul_authors:
                         s += u'<u>%s</u> (%s), ' % (author, order)
@@ -154,11 +158,18 @@ class ADSEntry(object):
                         s += u'%s (%s), ' % (author, order)
                     total -= 1
 
-            s += u'and %d coauthors' % total
+            if japanese:
+                s += u' 他 %d 名' % total
+            else:
+                s += u'and %d coauthors' % total
+                
             return s
 
     def getNewScientificFormat(self, ul_authors, cor_authors, maximum): # 新学術
         return u'“%s”, %s, <i>%s</i> <b>%s</b>, %s (%s)' % (self.title, self.formatAuthors(ul_authors, cor_authors, maximum, True), self.journal, self.volume, self.pages, self.year)
+
+    def getFosteringJointIntResBFormat(self, ul_authors, maximum): # 国際共同研究加速基金（国際共同研究強化（Ｂ））
+        return u'“%s”, %s, <i>%s</i> <b>%s</b>, %s (%s)' % (self.title, self.formatAuthors(ul_authors, (), maximum, True, True), self.journal, self.volume, self.pages, self.year)
 
 if __name__ == '__main__':
     sys.stdout = codecs.getwriter('utf_8')(sys.stdout)
